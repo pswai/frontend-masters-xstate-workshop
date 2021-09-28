@@ -31,6 +31,12 @@ const assignDelta = assign({
   },
 });
 
+const assignUser = assign({
+  user: (context, event) => {
+    return event.user;
+  },
+});
+
 const resetPosition = assign({
   dx: 0,
   dy: 0,
@@ -69,7 +75,12 @@ const dragDropMachine = createMachine(
         ],
       },
       unauthorized: {
-        type: "final",
+        on: {
+          signin: {
+            actions: assignUser,
+            target: "checkingAuth",
+          },
+        },
       },
       idle: {
         on: {
@@ -136,4 +147,13 @@ elBody.addEventListener("keyup", (e) => {
   if (e.key === "Escape") {
     service.send("keyup.escape");
   }
+});
+
+elButton.addEventListener("click", () => {
+  service.send({
+    type: "signin",
+    user: {
+      name: "Noctis",
+    },
+  });
 });
