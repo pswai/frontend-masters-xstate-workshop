@@ -3,66 +3,75 @@ import { createMachine, assign, interpret } from "xstate";
 const elBox = document.querySelector("#box");
 const elBody = document.body;
 
-const machine = createMachine({
-  initial: "idle",
-  // Set the initial context
-  context: {
-    x: 0,
-    y: 0,
-    dx: 0,
-    dy: 0,
-    px: 0,
-    py: 0,
-  },
-  states: {
-    idle: {
-      on: {
-        mousedown: {
-          // Assign the point
-          target: "dragging",
-          actions: assign({
-            px: (context, event) => {
-              return event.clientX;
-            },
-            py: (context, event) => {
-              return event.clientY;
-            },
-          }),
+const machine = createMachine(
+  {
+    initial: "idle",
+    // Set the initial context
+    context: {
+      x: 0,
+      y: 0,
+      dx: 0,
+      dy: 0,
+      px: 0,
+      py: 0,
+    },
+    states: {
+      idle: {
+        on: {
+          mousedown: {
+            // Assign the point
+            target: "dragging",
+            actions: "recordMouseLocation",
+          },
         },
       },
-    },
-    dragging: {
-      on: {
-        mousemove: {
-          // Assign the delta
-          // (no target!)
-          actions: assign({
-            dx: (context, event) => {
-              return event.clientX - context.px;
-            },
-            dy: (context, event) => {
-              return event.clientY - context.py;
-            },
-          }),
-        },
-        mouseup: {
-          // Assign the position
-          target: "idle",
-          actions: assign({
-            x: (context, event) => {
-              return context.x + context.dx;
-            },
-            y: (context, event) => {
-              return context.y + context.dy;
-            },
-            dx: 0,
-            dy: 0,
-          }),
+      dragging: {
+        on: {
+          mousemove: {
+            // Assign the delta
+            // (no target!)
+            actions: "recordMouseMoveDelta",
+          },
+          mouseup: {
+            // Assign the position
+            target: "idle",
+            actions: "setRestPosition",
+          },
         },
       },
     },
   },
-});
+  {
+    actions: {
+      recordMouseLocation: assign({
+        px: (context, event) => {
+          return event.clientX;
+        },
+        py: (context, event) => {
+          return event.clientY;
+        },
+      }),
+      recordMouseMoveDelta: assign({
+        dx: (context, event) => {
+          return event.clientX - context.px;
+        },
+        dy: (context, event) => {
+          return event.clientY - context.py;
+        },
+      }),
+      setRestPosition: assign({
+        x: (context, event) => {
+          return context.x + context.dx;
+        },
+        y: (context, event) => {
+          return context.y + context.dy;
+        },
+        dx: 0,
+        dy: 0,
+      }),
+    },
+  }
+);
 
 const service = interpret(machine);
 
