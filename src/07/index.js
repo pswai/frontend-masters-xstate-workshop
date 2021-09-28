@@ -1,8 +1,8 @@
-import { createMachine, assign, interpret } from 'xstate';
+import { createMachine, assign, interpret } from "xstate";
 
-const elBox = document.querySelector('#box');
+const elBox = document.querySelector("#box");
 const elBody = document.body;
-const elButton = document.querySelector('#button');
+const elButton = document.querySelector("#button");
 
 const assignPoint = assign({
   px: (context, event) => event.clientX,
@@ -38,47 +38,70 @@ const resetPosition = assign({
   py: 0,
 });
 
-const dragDropMachine = createMachine({
-  // The initial state should check auth status instead.
-  initial: 'idle',
-  context: {
-    x: 0,
-    y: 0,
-    dx: 0,
-    dy: 0,
-    px: 0,
-    py: 0,
-    user: undefined,
-  },
-  states: {
-    // Add two states:
-    // - checkingAuth (with transient transitions)
-    // - unauthorized
-    idle: {
-      on: {
-        mousedown: {
-          actions: assignPoint,
-          target: 'dragging',
+const isAuthenticated = (context) => !!context.user;
+
+const dragDropMachine = createMachine(
+  {
+    // The initial state should check auth status instead.
+    initial: "checkingAuth",
+    context: {
+      x: 0,
+      y: 0,
+      dx: 0,
+      dy: 0,
+      px: 0,
+      py: 0,
+      user: undefined,
+    },
+    states: {
+      // Add two states:
+      // - checkingAuth (with transient transitions)
+      // - unauthorized
+      checkingAuth: {
+        always: [
+          {
+            cond: "isAuthenticated",
+            target: "idle",
+          },
+          {
+            target: "unauthorized",
+          },
+        ],
+      },
+      unauthorized: {
+        type: "final",
+      },
+      idle: {
+        on: {
+          mousedown: {
+            actions: assignPoint,
+            target: "dragging",
+          },
+        },
+      },
+      dragging: {
+        on: {
+          mousemove: {
+            actions: assignDelta,
+          },
+          mouseup: {
+            actions: [assignPosition],
+            target: "idle",
+          },
+          "keyup.escape": {
+            target: "idle",
+            actions: resetPosition,
+          },
         },
       },
     },
-    dragging: {
-      on: {
-        mousemove: {
-          actions: assignDelta,
-        },
-        mouseup: {
-          actions: [assignPosition],
-          target: 'idle',
-        },
-        'keyup.escape': {
-          target: 'idle',
-          actions: resetPosition,
-        },
-      },
-    },
   },
-});
+  {
+    guards: {
+      isAuthenticated,
+    },
+  }
+);
 
 const service = interpret(dragDropMachine);
 
@@ -88,29 +111,29 @@ service.onTransition((state) => {
   if (state.changed) {
     console.log(state.context);
 
-    elBox.style.setProperty('--dx', state.context.dx);
-    elBox.style.setProperty('--dy', state.context.dy);
-    elBox.style.setProperty('--x', state.context.x);
-    elBox.style.setProperty('--y', state.context.y);
+    elBox.style.setProperty("--dx", state.context.dx);
+    elBox.style.setProperty("--dy", state.context.dy);
+    elBox.style.setProperty("--x", state.context.x);
+    elBox.style.setProperty("--y", state.context.y);
   }
 });
 
 service.start();
 
-elBox.addEventListener('mousedown', (event) => {
+elBox.addEventListener("mousedown", (event) => {
   service.send(event);
 });
 
-elBody.addEventListener('mousemove', (event) => {
+elBody.addEventListener("mousemove", (event) => {
   service.send(event);
 });
 
-elBody.addEventListener('mouseup', (event) => {
+elBody.addEventListener("mouseup", (event) => {
   service.send(event);
 });
 
-elBody.addEventListener('keyup', (e) => {
-  if (e.key === 'Escape') {
-    service.send('keyup.escape');
+elBody.addEventListener("keyup", (e) => {
+  if (e.key === "Escape") {
+    service.send("keyup.escape");
   }
 });
