@@ -37,6 +37,9 @@ const machine = createMachine(
             target: "idle",
             actions: "setRestPosition",
           },
+          keyup: {
+            actions: "resetPosition",
+          },
         },
       },
     },
@@ -69,6 +72,14 @@ const machine = createMachine(
         dx: 0,
         dy: 0,
       }),
+      resetPosition: assign((context, event) => {
+        if (event.key === "Escape") {
+          return {
+            dx: 0,
+            dy: 0,
+          };
+        }
+      }),
     },
   }
 );
@@ -97,3 +108,4 @@ service.start();
 elBox.addEventListener("mousedown", service.send);
 elBody.addEventListener("mousemove", service.send);
 elBody.addEventListener("mouseup", service.send);
+elBody.addEventListener("keyup", service.send);
