@@ -10,7 +10,7 @@ const displayMachine = createMachine({
   states: {
     hidden: {
       on: {
-        TURN_ON: "visible",
+        TURN_ON: "visible.hist",
       },
     },
     visible: {
@@ -21,6 +21,10 @@ const displayMachine = createMachine({
       // parallel states should transition between each other.
       type: "parallel",
       states: {
+        hist: {
+          type: "history",
+          history: "deep",
+        },
         mode: {
           initial: "light",
           states: {
